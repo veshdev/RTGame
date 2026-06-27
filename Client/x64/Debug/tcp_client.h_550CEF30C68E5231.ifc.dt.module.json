@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "x64\\Debug\\tcp_client.obj",
+            "outputs": [
+                "x64\\Debug\\tcp_client.h_550CEF30C68E5231.ifc.dt.module.json",
+                "x64\\Debug\\tcp_client.h_550CEF30C68E5231.ifc.dt.d.json",
+                "x64\\Debug\\tcp_client.h.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "C:\\Users\\MarkVesh\\Projects\\RTGame\\Client\\tcp_client.h",
+                    "source-path": "c:\\users\\markvesh\\projects\\rtgame\\client\\tcp_client.h",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

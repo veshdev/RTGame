@@ -1,0 +1,97 @@
+# Visual Studio
+.vs/
+*.vcxproj.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build outputs
+bin/
+obj/
+*/bin/
+*/obj/
+
+# Visual Studio Code
+.vscode/
+
+# Rider
+.idea/
+
+# NuGet
+*.nupkg
+# The packages folder can be ignored because of PackageReference
+**/packages/
+
+# MSBuild generated files
+*.userprefs
+*.cache
+*.log
+
+# Visual C++ intermediate files
+*.ilk
+*.idb
+*.pdb
+*.ipdb
+*.exp
+*.obj
+*.o
+
+# C++ build directories
+build/
+out/
+cmake-build-debug/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# C++ binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.lib
+*.a
+
+# Generated files
+*.g.cs
+*.g.i.cs
+*AssemblyInfo.cs
+
+# Rider / Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# vcpkg
+vcpkg_installed/
+applications/vcpkg/packages/
+buildtrees/
+downloads/
+installed/
+
+# CMake generated editors / IDE files
+*.vcxproj.*
+*_deps/
+
+# Keep project and source files
+!/**/*.csproj
+!/**/*.sln
+!/**/Server/**/*.cs
+!/**/Client/**/*.cs
+
+# Maps and assets should be committed - do not ignore
+!/**/Maps/**
+
+# Ignore obj outputs under project folders only (keep source & project files)
+**/obj/**
+**/bin/**
+
+# End of file
