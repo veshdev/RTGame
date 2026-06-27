@@ -165,9 +165,9 @@ public class Server
         string mapPath = args is { Length: > 1 } ? args[1] : Path.Combine(AppContext.BaseDirectory, "Maps", "default.map");
 
         Console.WriteLine("============================================================");
-        Console.WriteLine("  Killfeed City — Authoritative Game Server");
-        Console.WriteLine($"  TCP:{NetworkConstants.TcpPort}  UDP:{NetworkConstants.UdpPort}  Tick:{NetworkConstants.ServerTickRate}Hz");
-        Console.WriteLine($"  Map: {mapPath}");
+        Console.WriteLine("\tGame Server");
+        Console.WriteLine($"\tTCP:{NetworkConstants.TcpPort}  UDP:{NetworkConstants.UdpPort}  Tick:{NetworkConstants.ServerTickRate}Hz");
+        Console.WriteLine($"\tMap: {mapPath}");
         Console.WriteLine("============================================================");
 
         ServerState serverState = new(mapPath);
