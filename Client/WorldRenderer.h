@@ -3,6 +3,7 @@
 #include "Entities.h"
 #include "Camera.h"
 #include "TileMap.h"
+#include "ResourceManager.h"
 #include <SFML/Graphics.hpp>
 #include <optional>
 
@@ -30,10 +31,12 @@ private:
     void DrawRect(float x, float y, float w, float h, const sf::Color& color);
     void DrawDirection(float x, float y, float angle, float length, const sf::Color& color);
     void DrawHpBar(float x, float y, float w, float h, int hp, int maxHp);
+    std::string IconPathForItem(uint8_t itemType) const;
 
     sf::RenderWindow window_;
     Camera camera_;
     TileMap tileMap_;
     sf::CircleShape circle_;
     sf::RectangleShape rect_;
+    ResourceManager resources_;
 };

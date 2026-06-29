@@ -118,7 +118,32 @@ void WorldRenderer::DrawProjectile(const ProjectileEntry& p) {
 }
 
 void WorldRenderer::DrawLoot(const LootEntry& l) {
-    DrawRect(l.x - 6.f, l.y - 6.f, 12.f, 12.f, kLoot);
+    std::string iconPath = IconPathForItem(l.item);
+    auto tex = iconPath.empty() ? nullptr : resources_.Texture(iconPath);
+    if (tex) {
+        sf::Sprite sprite(*tex);
+        sprite.setPosition({l.x - 12.f, l.y - 12.f});
+        sprite.setScale({24.f / tex->getSize().x, 24.f / tex->getSize().y});
+        window_.draw(sprite);
+    } else {
+        DrawRect(l.x - 6.f, l.y - 6.f, 12.f, 12.f, kLoot);
+    }
+}
+
+std::string WorldRenderer::IconPathForItem(uint8_t itemType) const {
+    using namespace Protocol;
+    switch (itemType) {
+        case ItemType::Axe: return "assets/icons/axe.png";
+        case ItemType::Pistol: return "assets/icons/pistol.png";
+        case ItemType::Rifle: return "assets/icons/rifle.png";
+        case ItemType::Shotgun: return "assets/icons/shotgun.png";
+        case ItemType::Medkit: return "assets/icons/medkit.png";
+        case ItemType::AmmoPistol: return "assets/icons/pistol_mag.png";
+        case ItemType::AmmoRifle: return "assets/icons/rifle_mag.png";
+        case ItemType::AmmoShotgun: return "assets/icons/shotgun_ammo.png";
+        case ItemType::Loot: return "assets/icons/loot.png";
+        default: return "";
+    }
 }
 
 void WorldRenderer::DrawCircle(float x, float y, float r, const sf::Color& color) {

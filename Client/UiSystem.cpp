@@ -9,6 +9,10 @@
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
+#include <cctype>
+#include "ResourceManager.h"
+
+static ResourceManager resources_; // simple process-wide resource cache
 
 namespace {
 
@@ -364,7 +368,7 @@ void UiSystem::DrawHud(const PlayerEntry* player, const std::vector<HotbarSlot>&
         ImGui::ProgressBar(player->extractionProgress / 100.f, { -1.f, 18.f * scale }, "Extracting");
     ImGui::End();
 
-    const float slotSize = 40.f * scale;
+    const float slotSize = 64.f * scale;
     const float slotGap = 4.f * scale;
     const float hotbarW = slotSize * Protocol::HotbarSlots + slotGap * (Protocol::HotbarSlots - 1);
     const float hotbarH = slotSize + 6.f * scale;
@@ -384,10 +388,44 @@ void UiSystem::DrawHud(const PlayerEntry* player, const std::vector<HotbarSlot>&
         const bool active = selectedSlot == static_cast<int>(i);
         if (active)
             ImGui::PushStyleColor(ImGuiCol_Button, { 0.25f, 0.45f, 0.30f, 1.f });
-        std::string label = Protocol::HotbarSlotName(static_cast<uint8_t>(i));
-        if (i < hotbar.size() && hotbar[i].quantity > 0)
-            label += "\n" + std::to_string(hotbar[i].quantity);
-        ImGui::Button(label.c_str(), { slotSize, slotSize });
+        ImGui::PushID(static_cast<int>(i));
+        auto IconPathForIndex = [](unsigned idx) -> std::string {
+            switch (idx) {
+                case 0: return "assets/icons/axe.png";
+                case 1: return "assets/icons/pistol.png";
+                case 2: return "assets/icons/rifle.png";
+                case 3: return "assets/icons/shotgun.png";
+                case 4: return "assets/icons/pistol_mag.png";
+                case 5: return "assets/icons/rifle_mag.png";
+                case 6: return "assets/icons/shotgun_ammo.png";
+                case 7: return "assets/icons/medkit.png";
+                case 8: return "assets/icons/loot.png";
+                default: return "";
+            }
+        };
+        std::string iconPath = IconPathForIndex(i);
+        auto tex = iconPath.empty() ? nullptr : resources_.Texture(iconPath);
+        if (tex) {
+            if (active) {
+                ImVec2 p = ImGui::GetCursorScreenPos();
+                ImGui::GetWindowDrawList()->AddRectFilled(p, { p.x + slotSize, p.y + slotSize }, IM_COL32(60, 115, 76, 255));
+            }
+            ImTextureID tid = (ImTextureID)(intptr_t)tex->getNativeHandle();
+            ImGui::Image(tid, { slotSize, slotSize });
+            if (i >= 4 && i < hotbar.size() && hotbar[i].quantity > 0) {
+                ImVec2 a = ImGui::GetItemRectMin();
+                ImVec2 b = ImGui::GetItemRectMax();
+                std::string q = std::to_string(hotbar[i].quantity);
+                ImU32 col = IM_COL32(255,255,255,255);
+                ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize()*1.3f, ImVec2(b.x - 6.f - ImGui::CalcTextSize(q.c_str()).x, b.y - 12.f), col, q.c_str());
+            }
+        } else {
+            std::string label = Protocol::HotbarSlotName(static_cast<uint8_t>(i));
+            if (i >= 4 && i < hotbar.size() && hotbar[i].quantity > 0)
+                label += "\n" + std::to_string(hotbar[i].quantity);
+            ImGui::Button(label.c_str(), { slotSize, slotSize });
+        }
+        ImGui::PopID();
         if (active)
             ImGui::PopStyleColor();
     }
