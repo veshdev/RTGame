@@ -34,17 +34,25 @@ bool TcpClient::Connect(const std::string& host, uint16_t port) {
         return false;
     }
     impl_->socket.setBlocking(true);
+    if (impl_->thread && impl_->thread->joinable()) {
+        try {
+            impl_->thread->join();
+        } catch (...) {}
+        impl_->thread.reset();
+    }
     impl_->running = true;
     impl_->thread = std::make_unique<std::thread>(&TcpClient::RecvLoop, this);
     return true;
 }
 
 void TcpClient::Disconnect() {
-    if (!impl_->running) return;
     impl_->running = false;
     impl_->socket.disconnect();
     if (impl_->thread && impl_->thread->joinable()) {
-        impl_->thread->join();
+        try {
+            impl_->thread->join();
+        } catch (...) {
+}
     }
     impl_->thread.reset();
 }
