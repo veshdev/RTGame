@@ -63,7 +63,11 @@ bool UiSystem::SetupFonts()
 
     io.FontDefault = io.Fonts->AddFontDefaultVector(&cfg);
 
-    return io.FontDefault != nullptr;
+    if (!io.FontDefault)
+        return false;
+
+    io.Fonts->Build();
+    return true;
 }
 
 void UiSystem::ApplyTheme() {
@@ -74,9 +78,6 @@ void UiSystem::ApplyTheme() {
     style.FontSizeBase = kBaseFontSize * s;
     style.WindowRounding = 6.f * s;
     style.FrameRounding = 4.f * s;
-    style.ItemSpacing = { 8.f * s, 6.f * s };
-    style.WindowPadding = { 18.f * s, 14.f * s };
-    style.FramePadding = { 8.f * s, 6.f * s };
     style.ScrollbarSize = 12.f * s;
 
     ImVec4* colors = style.Colors;
@@ -143,8 +144,8 @@ UiAction UiSystem::DrawMainMenu(int points, const std::vector<SavedAccount>& acc
     ImGui::Separator();
     ImGui::Spacing();
 
-    const float entryH = 44.f * UiScale();
-    const float listH = std::min(440.f * UiScale(), entryH * static_cast<float>(accounts.size()) + 16.f);
+    const float entryH = 18.f * UiScale();
+    const float listH = std::min(270.f * UiScale(), entryH * static_cast<float>(accounts.size()) + 54.f); // 270 - max size of accounts list
     if (ImGui::BeginChild("Accounts", { 0.f, listH }, true)) {
         ImGui::TextDisabled("Saved Accounts");
         for (size_t i = 0; i < accounts.size(); ++i) {
@@ -192,7 +193,8 @@ UiAction UiSystem::DrawLogin(std::string& username, std::string& password,
     ImGui::InputText("Username", &username);
     ImGui::InputText("Password", &password, ImGuiInputTextFlags_Password);
 
-    if (ImGui::BeginChild("SavedLogin", { 0.f, 160.f * UiScale() }, true)) {
+    // Фиксированная высота 200 пикселей для списка аккаунтов
+    if (ImGui::BeginChild("SavedLogin", { 0.f, 200.f }, true)) {
         for (size_t i = 0; i < accounts.size() && i < 6; ++i) {
             if (ImGui::Selectable(accounts[i].username.c_str(), static_cast<int>(i) == selectedAccount)) {
                 selectedAccount = static_cast<int>(i);
