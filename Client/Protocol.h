@@ -74,6 +74,8 @@ constexpr uint32_t MapH = 64;
 
 constexpr uint32_t TcpHeaderSize = 3;
 
+constexpr uint32_t UdpInputPayloadSize = 12; // tickId(4) + moveX(2) + moveY(2) + angle(2) + hotbar(1) + flags(1)
+
 
 
 namespace TcpMsg {
