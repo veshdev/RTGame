@@ -364,18 +364,19 @@ void UiSystem::DrawHud(const PlayerEntry* player, const std::vector<HotbarSlot>&
         ImGui::ProgressBar(player->extractionProgress / 100.f, { -1.f, 18.f * scale }, "Extracting");
     ImGui::End();
 
-    const float slotSize = 48.f * scale;
+    const float slotSize = 40.f * scale;
     const float slotGap = 4.f * scale;
     const float hotbarW = slotSize * Protocol::HotbarSlots + slotGap * (Protocol::HotbarSlots - 1);
     const float hotbarH = slotSize + 6.f * scale;
     ImGui::SetNextWindowPos(
         { vp->WorkPos.x + vp->WorkSize.x * 0.5f - hotbarW * 0.5f, vp->WorkPos.y + vp->WorkSize.y - hotbarH - margin });
     ImGui::SetNextWindowSize({ hotbarW, hotbarH });
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
     ImGui::Begin("HUD_Hotbar", nullptr,
         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs);
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(6.f * scale, 4.f * scale));
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(slotGap, 4.f * scale));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.f * scale, 2.f * scale));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(slotGap, 2.f * scale));
     for (unsigned i = 0; i < Protocol::HotbarSlots; ++i) {
         if (i > 0) {
             ImGui::SameLine(0.f, slotGap);
@@ -392,6 +393,7 @@ void UiSystem::DrawHud(const PlayerEntry* player, const std::vector<HotbarSlot>&
     }
     ImGui::PopStyleVar(2);
     ImGui::End();
+    ImGui::PopStyleVar();
 
     const bool medkitSelected = selectedSlot == static_cast<int>(Protocol::HotbarSlot::Medkit);
     ImGui::SetNextWindowPos({ vp->WorkPos.x + margin, vp->WorkPos.y + vp->WorkSize.y - statusH - hotbarH - margin * 2.f });

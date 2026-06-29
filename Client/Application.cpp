@@ -285,6 +285,12 @@ void Application::Run() {
             if (scene == Scene::Playing && session.Udp()) {
                 if (in.hotbarSlot >= 0)
                     hotbarSlot_ = in.hotbarSlot;
+                else if (in.hotbarDelta != 0) {
+                    const int slots = static_cast<int>(Protocol::HotbarSlots);
+                    hotbarSlot_ = (hotbarSlot_ + in.hotbarDelta) % slots;
+                    if (hotbarSlot_ < 0)
+                        hotbarSlot_ += slots;
+                }
 
                 session.Udp()->SendInput(in.moveX, in.moveY, in.aimAngle, static_cast<uint8_t>(hotbarSlot_), in.fire,
                                          in.pickup);

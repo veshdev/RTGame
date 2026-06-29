@@ -34,6 +34,7 @@ struct InputState {
     bool fire = false;
     bool pickup = false;
     int hotbarSlot = -1;
+    int hotbarDelta = 0;
 
     std::optional<char> textChar;
 };

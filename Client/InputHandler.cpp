@@ -109,6 +109,12 @@ InputState InputHandler::Poll(InputMode mode, bool uiWantsKeyboard, bool uiWants
                 continue;
             if (mouse->button == sf::Mouse::Button::Left)
                 state.mouseClick = true;
+        } else if (const auto* wheel = event->getIf<sf::Event::MouseWheelScrolled>()) {
+            // Skip wheel input when unfocused or when UI wants the mouse
+            if (!focused_ || uiWantsMouse)
+                continue;
+            // SFML: wheel->delta > 0 means scroll up. We'll map scroll up to previous slot (-1), down to next (+1).
+            state.hotbarDelta -= static_cast<int>(wheel->delta);
         }
     }
 
