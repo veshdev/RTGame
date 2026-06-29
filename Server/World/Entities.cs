@@ -86,8 +86,9 @@ public class Player : ISnapshotable
 {
     public int PlayerId { get; set; }
     public string Username { get; set; }
-    public object? TcpConn { get; set; }
+    internal TcpClientHandler? TcpConn { get; set; }
     public (string ip, int port)? UdpAddr { get; set; }
+
 
     public float X { get; set; }
     public float Y { get; set; }

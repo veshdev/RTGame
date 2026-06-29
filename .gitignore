@@ -94,4 +94,7 @@ installed/
 **/obj/**
 **/bin/**
 
+x64/
+Client/x64/
+
 # End of file

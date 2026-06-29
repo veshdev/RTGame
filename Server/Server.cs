@@ -58,12 +58,12 @@ public class ServerState : IGameServer
             world.HotbarChanged += player => OnHotbarChanged(player);
             world.AllPlayersGone += () => OnAllPlayersGone(room);
             room.SetWorld(world);
-            Console.WriteLine($"[Server] World created for room {room.RoomId}, {playerList.Count} players, map={MapPath}");
+            Logger.Info($"[Server] World created for room {room.RoomId}, {playerList.Count} players, map={MapPath}");
             return null;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Server] Map load failed for room {room.RoomId}: {ex.Message}");
+            Logger.Error($"[Server] Map load failed for room {room.RoomId}: {ex.Message}");
             room.CancelMatchStart();
             return ex.Message;
         }
@@ -71,8 +71,7 @@ public class ServerState : IGameServer
 
     private void OnHotbarChanged(Player player)
     {
-        if (player.TcpConn is TcpClientHandler handler)
-            handler.SendHotbarSnapshot((byte)player.PlayerId, player.Hotbar.ToBytes());
+        player.TcpConn?.SendHotbarSnapshot((byte)player.PlayerId, player.Hotbar.ToBytes());
     }
 
     private void OnPlayerExtracted(Room room, Player player, int points)
@@ -80,11 +79,9 @@ public class ServerState : IGameServer
         Accounts.AddPoints(player.Username, points);
         int total = Accounts.GetPoints(player.Username);
 
-        if (player.TcpConn is TcpClientHandler handler)
-            handler.SendExtracted(points, total);
+        player.TcpConn?.SendExtracted(points, total);
 
-        if (room.World is GameWorld world)
-            world.Players.Remove(player.PlayerId);
+        room.World?.Players.Remove(player.PlayerId);
 
         room.RemoveMatchPlayer(player.PlayerId);
         ServerLogger.LogPlayerExtraction(room.RoomId, player.PlayerId, player.Username, points);
@@ -107,7 +104,7 @@ public class Server
         {
             TcpListener srvSock = new(IPAddress.Parse(host), port);
             srvSock.Start(16);
-            Console.WriteLine($"[TCP] Listening on {host}:{port}");
+            Logger.Info($"[TCP] Listening on {host}:{port}");
 
             while (true)
             {
@@ -121,19 +118,19 @@ public class Server
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[TCP] Accept error: {ex.Message}");
+                    Logger.Error($"[TCP] Accept error: {ex.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[TCP] Listener error: {ex.Message}");
+            Logger.Error($"[TCP] Listener error: {ex.Message}");
         }
     }
 
     private static void GameLoop(ServerState serverState, UdpHandler udpHandler)
     {
-        Console.WriteLine($"[Server] Game loop starting (UDP broadcast) at {NetworkConstants.ServerTickRate} Hz");
+        Logger.Info($"[Server] Game loop starting (UDP broadcast) at {NetworkConstants.ServerTickRate} Hz");
         Stopwatch stopwatch = Stopwatch.StartNew();
         double tickInterval = NetworkConstants.TickDt;
         double nextTick = stopwatch.Elapsed.TotalSeconds;
@@ -161,24 +158,24 @@ public class Server
 
     public static void Main(string[]? args)
     {
-        string host = args is { Length: > 0 } ? args[0] : "0.0.0.0";
-        string mapPath = args is { Length: > 1 } ? args[1] : Path.Combine(AppContext.BaseDirectory, "Maps", "default.map");
+        string host = args != null && args.Length > 0 ? args[0] : "0.0.0.0";
+        string mapPath = args != null && args.Length > 1 ? args[1] : Path.Combine(AppContext.BaseDirectory, "Maps", "default.map");
 
-        Console.WriteLine("============================================================");
-        Console.WriteLine("\tGame Server");
-        Console.WriteLine($"\tTCP:{NetworkConstants.TcpPort}  UDP:{NetworkConstants.UdpPort}  Tick:{NetworkConstants.ServerTickRate}Hz");
-        Console.WriteLine($"\tMap: {mapPath}");
-        Console.WriteLine("============================================================");
+        Logger.Info("============================================================");
+        Logger.Info("Game Server");
+        Logger.Info($"TCP:{NetworkConstants.TcpPort}  UDP:{NetworkConstants.UdpPort}  Tick:{NetworkConstants.ServerTickRate}Hz");
+        Logger.Info($"Map: {mapPath}");
+        Logger.Info("============================================================");
 
         ServerState serverState = new(mapPath);
         MapValidationResult mapCheck = MapLoader.Validate(mapPath);
         if (!mapCheck.Ok)
         {
-            Console.WriteLine($"[Server] WARNING: Map validation failed: {mapCheck.Error}");
+            Logger.Warn($"[Server] WARNING: Map validation failed: {mapCheck.Error}");
         }
         else
         {
-            Console.WriteLine($"[Server] Map validated: {mapPath}");
+            Logger.Info($"[Server] Map validated: {mapPath}");
         }
 
         UdpHandler udpHandler = new(serverState, host);
@@ -195,7 +192,7 @@ public class Server
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("\n[Server] Shutting down.");
+            Logger.Info("\n[Server] Shutting down.");
             udpHandler.Dispose();
         }
     }

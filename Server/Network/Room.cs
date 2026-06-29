@@ -11,9 +11,9 @@ public class LobbySlot
     public int PlayerId { get; set; }
     public string Username { get; set; }
     public bool Ready { get; set; }
-    public object? TcpConn { get; set; }
+    internal TcpClientHandler? TcpConn { get; set; }
 
-    public LobbySlot(int playerId, string username, object? tcpConn)
+    internal LobbySlot(int playerId, string username, TcpClientHandler? tcpConn)
     {
         PlayerId = playerId;
         Username = username ?? string.Empty;
@@ -35,10 +35,10 @@ public class Room : IDisposable
     private readonly Dictionary<int, Player> _players;
     private RoomThread? _thread;
 
-    public object? World { get; set; }
+    internal GameWorld? World { get; set; }
 
-    public Room(int roomId, string name, string password,
-                int hostPlayerId, string hostUsername, object? hostTcp)
+    internal Room(int roomId, string name, string password,
+                int hostPlayerId, string hostUsername, TcpClientHandler? hostTcp)
     {
         RoomId = roomId;
         Name = name.Length > DataSizes.RoomNameMax ? 
@@ -67,7 +67,7 @@ public class Room : IDisposable
 
     public IReadOnlyDictionary<int, Player> Players => _players;
 
-    public string? Join(int playerId, string username, string password, object? tcpConn)
+    internal string? Join(int playerId, string username, string password, TcpClientHandler? tcpConn)
     {
         if (State != RoomState.Lobby)
             return "match_already_started";
@@ -146,18 +146,18 @@ public class Room : IDisposable
                 }
             }
 
-            public void SetWorld(object? world)
-    {
-        World = world;
-        State = RoomState.InGame;
+            internal void SetWorld(GameWorld? world)
+            {
+                World = world;
+                State = RoomState.InGame;
 
-        // Start the room's game thread
-        if (world is GameWorld)
-        {
-            _thread = new RoomThread(this);
-            _thread.Start();
-        }
-    }
+                // Start the room's game thread
+                if (world != null)
+                {
+                    _thread = new RoomThread(this);
+                    _thread.Start();
+                }
+            }
 
     public void RemoveMatchPlayer(int playerId)
     {
@@ -263,8 +263,8 @@ public class RoomManager
         }
     }
 
-    public Room? CreateRoom(string name, string password,
-                           int hostPid, string hostUsername, object? hostTcp)
+    internal Room? CreateRoom(string name, string password,
+                           int hostPid, string hostUsername, TcpClientHandler? hostTcp)
     {
         lock (_lock)
         {

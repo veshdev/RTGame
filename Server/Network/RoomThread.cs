@@ -80,7 +80,7 @@ internal class RoomThread : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[Room] Tick error room {_room.RoomId}: {ex.Message}");
+                    Logger.Error($"[Room] Tick error room {_room.RoomId}: {ex.Message}");
                     _running = false;
                 }
             }

@@ -42,7 +42,7 @@ internal class UdpHandler : IDisposable
         _listenerThread = new Thread(Run) { IsBackground = true, Name = "UDP-Listener" };
         _listenerThread.Start();
 
-        Console.WriteLine($"[UDP] Listening on {host}:{NetworkConstants.UdpPort}");
+        Logger.Info($"[UDP] Listening on {host}:{NetworkConstants.UdpPort}");
     }
 
     private void Run()

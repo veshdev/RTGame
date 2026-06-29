@@ -37,7 +37,7 @@ internal class TcpClientHandler
 
     public void Run()
     {
-        Console.WriteLine($"[TCP] Client connected: {_address}");
+        Logger.Info($"[TCP] Client connected: {_address}");
         try
         {
             while (Running)
@@ -52,7 +52,7 @@ internal class TcpClientHandler
         catch (ObjectDisposedException) { }
         catch (Exception ex)
         {
-            Console.WriteLine($"[TCP] Handler error: {ex.Message}");
+            Logger.Error($"[TCP] Handler error: {ex.Message}");
         }
         finally
         {
