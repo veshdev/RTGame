@@ -12,6 +12,9 @@ obj/
 */bin/
 */obj/
 
+x64/
+Client/x64/
+
 # Visual Studio Code
 .vscode/
 
@@ -93,8 +96,5 @@ installed/
 # Ignore obj outputs under project folders only (keep source & project files)
 **/obj/**
 **/bin/**
-
-x64/
-Client/x64/
 
 # End of file

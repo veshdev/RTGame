@@ -4,6 +4,10 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Client/Client.vcxproj" Id="e51459ad-767a-433c-a50a-f1df054e6c14" />
-  <Project Path="Server/Server.csproj" />
+  <Project Path="Client/Client.vcxproj" Id="e51459ad-767a-433c-a50a-f1df054e6c14">
+    <BuildType Solution="Debug|Any CPU" Project="Release" />
+  </Project>
+  <Project Path="Server/Server.csproj">
+    <BuildType Solution="Debug|Any CPU" Project="Release" />
+  </Project>
 </Solution>
