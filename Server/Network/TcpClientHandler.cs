@@ -289,7 +289,7 @@ internal class TcpClientHandler
         Send(TcpMsg.S_ROOM_LEFT, Array.Empty<byte>());
 
         if (room.Slots.Count == 0)
-            _server.RoomManager.RemoveRoom(room.RoomId);
+            _server.RoomManager.RemoveRoomDelayed(room.RoomId, 1000);
         else
             BroadcastLobbyState(room);
     }
@@ -401,7 +401,7 @@ internal class TcpClientHandler
         {
             room.Leave(PlayerId);
             if (room.Slots.Count == 0 && room.Players.Count == 0)
-                _server.RoomManager.RemoveRoom(room.RoomId);
+                _server.RoomManager.RemoveRoomDelayed(room.RoomId, 1000);
             else if (room.Slots.Count > 0)
                 BroadcastLobbyState(room);
         }

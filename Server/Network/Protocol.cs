@@ -321,29 +321,6 @@ public static class UdpPacketHelpers
 {
     private const int InputPayloadSize = 12;
 
-    public static byte[] PackUdpInput(UdpInputData input)
-    {
-        byte[] result = new byte[1 + InputPayloadSize];
-        result[0] = UdpMsg.C_INPUT;
-        Span<byte> payload = result.AsSpan(1, InputPayloadSize);
-
-        BinaryPrimitives.WriteUInt32LittleEndian(payload[0..4], input.TickId);
-
-        float moveXClamped = Math.Clamp(input.MoveX, -1.0f, 1.0f);
-        BinaryPrimitives.WriteInt16LittleEndian(payload[4..6], (short)(moveXClamped * 32767));
-
-        float moveYClamped = Math.Clamp(input.MoveY, -1.0f, 1.0f);
-        BinaryPrimitives.WriteInt16LittleEndian(payload[6..8], (short)(moveYClamped * 32767));
-
-        float angleNorm = input.Angle % 1.0f;
-        if (angleNorm < 0) angleNorm += 1.0f;
-        BinaryPrimitives.WriteUInt16LittleEndian(payload[8..10], (ushort)(angleNorm * 65535));
-
-        payload[10] = input.HotbarSlot;
-        payload[11] = (byte)((input.Fire ? 1 : 0) | (input.Pickup ? 2 : 0));
-        return result;
-    }
-
     public static UdpInputData? UnpackUdpInput(byte[] data)
     {
         if (data == null || data.Length < 1 + InputPayloadSize || data[0] != UdpMsg.C_INPUT)

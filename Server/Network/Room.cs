@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Server.World;
 
 namespace Server.Network;
@@ -287,16 +288,24 @@ public class RoomManager
         }
     }
 
-    public void RemoveRoom(int roomId)
+    public void RemoveRoomDelayed(int roomId, int delayMs = 1000)
     {
-        lock (_lock)
+        Task.Run(async () =>
         {
-            if (_rooms.TryGetValue(roomId, out var room))
+            await Task.Delay(delayMs);
+            lock (_lock)
             {
-                room.Dispose();
-                _rooms.Remove(roomId);
+                if (_rooms.TryGetValue(roomId, out var room))
+                {
+                    if (room.Slots.Count == 0 && room.Players.Count == 0)
+                    {
+                        room.Dispose();
+                        _rooms.Remove(roomId);
+                        Logger.Info($"[Server] Room {roomId} removed after delay");
+                    }
+                }
             }
-        }
+        });
     }
 
     public Room? FindRoomOfPlayer(int playerId)

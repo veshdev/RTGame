@@ -86,13 +86,13 @@ public class ServerState : IGameServer
         room.RemoveMatchPlayer(player.PlayerId);
         ServerLogger.LogPlayerExtraction(room.RoomId, player.PlayerId, player.Username, points);
         if (room.PlayerCount == 0)
-            RoomManager.RemoveRoom(room.RoomId);
+            RoomManager.RemoveRoomDelayed(room.RoomId, 1000);
     }
 
     private void OnAllPlayersGone(Room room)
     {
         ServerLogger.LogRoomDestroy(room.RoomId);
-        RoomManager.RemoveRoom(room.RoomId);
+        RoomManager.RemoveRoomDelayed(room.RoomId, 1000);
     }
 }
 
