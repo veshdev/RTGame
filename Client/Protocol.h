@@ -44,7 +44,7 @@ constexpr uint8_t ProtocolVersion = 2;
 
 constexpr uint32_t UsernameMax = 16;
 
-constexpr uint32_t PasswordMax = 32;
+constexpr uint32_t PasswordMax = 64;
 
 constexpr uint32_t RoomNameMax = 24;
 
@@ -264,6 +264,10 @@ std::pair<std::string, size_t> UnpackString(const uint8_t* data, size_t dataLen,
 
 
 std::vector<uint8_t> PackLogin(uint8_t msgType, const std::string& username, const std::string& password);
+
+// Hash helpers
+std::string Sha256Hex(const std::string& input);
+bool IsSha256Hex(const std::string& s);
 
 std::vector<uint8_t> PackUdpInput(uint32_t tickId, float moveX, float moveY, float angle,
 

@@ -10,14 +10,18 @@ bool GameSession::SendAuth(uint8_t msgType, const std::string& host, const std::
                            const std::string& password) {
     host_ = host;
     username_ = username;
-    password_ = password;
+    std::string passToSend = Protocol::IsSha256Hex(password) ? password : Protocol::Sha256Hex(password);
     tcp_.SetEventCallback([this](const TcpMessage& msg) { OnTcpMessage(msg); });
     if (!tcp_.Connect(host_, Protocol::TcpPort)) {
+        // clear sensitive data
+        std::fill(passToSend.begin(), passToSend.end(), '\0');
         error_ = "Connection failed";
         return false;
     }
-    auto packet = Protocol::PackLogin(msgType, username, password);
-    return tcp_.Send(packet[2], packet.data() + 3, packet.size() - 3);
+    auto packet = Protocol::PackLogin(msgType, username, passToSend);
+    bool sent = tcp_.Send(packet[2], packet.data() + 3, packet.size() - 3);
+    std::fill(passToSend.begin(), passToSend.end(), '\0');
+    return sent;
 }
 
 bool GameSession::Login(const std::string& host, const std::string& username, const std::string& password) {
@@ -133,7 +137,7 @@ void GameSession::OnTcpMessage(const TcpMessage& msg) {
             playerId_ = msg.payload[0];
             points_ = static_cast<int>(msg.payload[1]) | (static_cast<int>(msg.payload[2]) << 8) |
                       (static_cast<int>(msg.payload[3]) << 16) | (static_cast<int>(msg.payload[4]) << 24);
-            AccountStorage::Instance().Remember(username_, password_);
+            AccountStorage::Instance().Remember(username_);
             udp_ = std::make_unique<UdpClient>(playerId_);
             udp_->Connect(host_, Protocol::UdpPort);
             scenes_.GoTo(Scene::RoomList);

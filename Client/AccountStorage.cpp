@@ -12,10 +12,6 @@ bool ValidUsername(const std::string& s) {
     return !s.empty() && s.size() <= Protocol::UsernameMax;
 }
 
-bool ValidPassword(const std::string& s) {
-    return !s.empty() && s.size() <= Protocol::PasswordMax;
-}
-
 std::string EscapeField(std::string s) {
     for (char& c : s) {
         if (c == '\t' || c == '\r' || c == '\n')
@@ -23,6 +19,7 @@ std::string EscapeField(std::string s) {
     }
     return s;
 }
+
 
 } // namespace
 
@@ -49,11 +46,11 @@ const SavedAccount* AccountStorage::SelectedAccount() const {
     return &accounts_[static_cast<size_t>(selected_)];
 }
 
-void AccountStorage::Remember(const std::string& username, const std::string& password) {
-    if (!ValidUsername(username) || !ValidPassword(password))
+void AccountStorage::Remember(const std::string& username) {
+    if (!ValidUsername(username))
         return;
 
-    SavedAccount entry{username, password};
+    SavedAccount entry{username};
     accounts_.erase(std::remove_if(accounts_.begin(), accounts_.end(),
                                    [&](const SavedAccount& a) { return a.username == username; }),
                     accounts_.end());
@@ -72,6 +69,7 @@ void AccountStorage::Load() {
     if (!in)
         return;
 
+    bool migrated = false;
     std::string line;
     while (std::getline(in, line)) {
         if (line.empty())
@@ -85,11 +83,15 @@ void AccountStorage::Load() {
                 continue;
         } else {
             entry.username = EscapeField(line.substr(0, tab));
-            entry.password = EscapeField(line.substr(tab + 1));
-            if (!ValidUsername(entry.username) || !ValidPassword(entry.password))
+            if (!ValidUsername(entry.username))
                 continue;
+            migrated = true;
         }
         accounts_.push_back(std::move(entry));
+    }
+
+    if (migrated) {
+        Save();
     }
 }
 
@@ -98,6 +100,6 @@ void AccountStorage::Save() {
     if (!out)
         return;
     for (const auto& account : accounts_) {
-        out << EscapeField(account.username) << '\t' << EscapeField(account.password) << '\n';
+        out << EscapeField(account.username) << '\n';
     }
 }

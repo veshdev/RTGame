@@ -58,7 +58,7 @@ public static class UdpMsg
 public static class DataSizes
 {
     public const int UsernameMax = 16;
-    public const int PasswordMax = 32;
+    public const int PasswordMax = 64;
     public const int RoomNameMax = 24;
     public const int RoomPasswordMax = 16;
     public const int ReasonMax = 64;

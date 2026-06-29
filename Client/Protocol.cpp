@@ -6,6 +6,8 @@
 
 #include <cstring>
 
+#include <hash-library/sha256.h>
+
 
 
 namespace Protocol {
@@ -251,6 +253,21 @@ bool UnpackUdpInput(const uint8_t* data, size_t dataLen, UdpInput& out) {
 }
 
 
+
+// SHA-256 helpers
+std::string Sha256Hex(const std::string& input) {
+    SHA256 sha256;
+    return sha256(input);
+}
+
+bool IsSha256Hex(const std::string& s) {
+    if (s.size() != 64) return false;
+    for (unsigned char c : s) {
+        bool ok = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+        if (!ok) return false;
+    }
+    return true;
+}
 
 } // namespace Protocol
 

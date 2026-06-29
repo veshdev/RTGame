@@ -17,7 +17,7 @@ namespace {
 
 void ApplySavedAccount(std::string& username, std::string& password, const SavedAccount& account) {
     username = account.username;
-    password = account.password;
+    password.clear();
 }
 
 bool SelectedRoomNeedsPassword(const GameSession& session) {

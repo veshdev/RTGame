@@ -103,7 +103,7 @@ public sealed class AccountStore
         !string.IsNullOrWhiteSpace(username) && username.Length <= 16;
 
     private static bool IsValidPassword(string password) =>
-        !string.IsNullOrEmpty(password) && password.Length <= 32;
+        !string.IsNullOrEmpty(password) && password.Length <= 64;
 
     private void Load()
     {

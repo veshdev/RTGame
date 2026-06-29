@@ -1,7 +1,8 @@
 {
   "dependencies": [
     "imgui",
+    "imgui-sfml",
     "sfml",
-    "imgui-sfml"
+    "hash-library"
   ]
 }

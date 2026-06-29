@@ -5,7 +5,6 @@
 
 struct SavedAccount {
     std::string username;
-    std::string password;
 };
 
 class AccountStorage {
@@ -15,7 +14,7 @@ public:
     const std::vector<SavedAccount>& Accounts() const { return accounts_; }
     int SelectedIndex() const { return selected_; }
     void Select(int index);
-    void Remember(const std::string& username, const std::string& password);
+    void Remember(const std::string& username);
     const SavedAccount* SelectedAccount() const;
 
 private:

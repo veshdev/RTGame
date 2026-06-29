@@ -141,7 +141,6 @@ private:
     std::string host_;
 
     std::string username_;
-    std::string password_;
 
     std::string error_;
 
