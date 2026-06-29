@@ -14,7 +14,7 @@ namespace {
 
     constexpr float kBaseWidth = 1280.f;
     constexpr float kBaseHeight = 720.f;
-    constexpr float kBaseFontSize = 24.f;
+    constexpr float kBaseFontSize = 18.f;
 
     void CenteredText(const char* text) {
         const float w = ImGui::CalcTextSize(text).x;
@@ -34,7 +34,7 @@ bool UiSystem::Init(sf::RenderWindow& window) {
         return true;
 
     viewport_ = window.getSize();
-    if (!ImGui::SFML::Init(window, true))
+    if (!ImGui::SFML::Init(window))
         return false;
 
     if (!SetupFonts()) {
@@ -54,45 +54,24 @@ void UiSystem::Shutdown(sf::RenderWindow& window) {
     initialized_ = false;
 }
 
-bool UiSystem::SetupFonts() {
-    ImFontAtlas* fonts = ImGui::GetIO().Fonts;
-    if (!fonts->Fonts.empty())
-        return true;
+bool UiSystem::SetupFonts()
+{
+    ImGuiIO& io = ImGui::GetIO();
 
     ImFontConfig cfg;
     cfg.SizePixels = kBaseFontSize;
-    cfg.OversampleH = 2;
-    cfg.OversampleV = 2;
-    cfg.PixelSnapH = true;
 
-#ifdef _WIN32
-    char* windir = nullptr;
-    size_t len = 0;
-    _dupenv_s(&windir, &len, "WINDIR");
-    if (windir) {
-        const std::filesystem::path segoeUiPath = std::filesystem::path(windir) / "Fonts" / "segoeui.ttf";
-        free(windir);
-        if (std::filesystem::exists(segoeUiPath)) {
-            if (auto f = fonts->AddFontFromFileTTF(segoeUiPath.string().c_str(), kBaseFontSize, &cfg, fonts->GetGlyphRangesDefault())) {
-                ImGui::GetIO().FontDefault = f;
-                return true;
-            }
-        }
-    }
-#endif
+    io.FontDefault = io.Fonts->AddFontDefaultVector(&cfg);
 
-    if (auto f = fonts->AddFontDefault(&cfg)) {
-        ImGui::GetIO().FontDefault = f;
-        return true;
-    }
-
-    return false;
+    return io.FontDefault != nullptr;
 }
 
 void UiSystem::ApplyTheme() {
     ImGuiStyle& style = ImGui::GetStyle();
     const float s = UiScale();
-    style.FontSizeBase = kBaseFontSize;
+
+    style.ScaleAllSizes(s);
+    style.FontSizeBase = kBaseFontSize * s;
     style.WindowRounding = 6.f * s;
     style.FrameRounding = 4.f * s;
     style.ItemSpacing = { 8.f * s, 6.f * s };
@@ -116,7 +95,6 @@ void UiSystem::BeginFrame(sf::RenderWindow& window, float dt) {
         return;
 
     viewport_ = window.getSize();
-    ImGui::GetIO().FontGlobalScale = UiScale();
     ImGui::SFML::Update(window, sf::seconds(dt));
 }
 
@@ -159,7 +137,7 @@ UiAction UiSystem::DrawMainMenu(int points, const std::vector<SavedAccount>& acc
     UiAction action = UiAction::None;
 
     ImGui::Spacing();
-    CenteredText("KILLFEED CITY");
+    CenteredText("REALTIME GAME CLIENT");
     ImGui::Spacing();
     ImGui::Text("Points: %d", points);
     ImGui::Separator();

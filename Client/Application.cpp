@@ -106,7 +106,7 @@ void Application::Run() {
         ui.BeginFrame(world.Window(), dt);
 
         if (scene == Scene::MainMenu) {
-            world.Window().clear({12, 14, 20});
+            world.Window().clear();
             int accountSel = accounts.SelectedIndex();
             switch (ui.DrawMainMenu(session.Points(), accounts.Accounts(), accountSel, session.Error())) {
             case UiAction::SelectAccount:
@@ -140,7 +140,7 @@ void Application::Run() {
         }
 
         if (scene == Scene::Settings) {
-            world.Window().clear({12, 14, 20});
+            world.Window().clear();
             switch (ui.DrawSettings(vsync_)) {
             case UiAction::ToggleVsync:
                 world.Window().setVerticalSyncEnabled(vsync_);
@@ -159,7 +159,7 @@ void Application::Run() {
         }
 
         if (scene == Scene::Register) {
-            world.Window().clear({12, 14, 20});
+            world.Window().clear();
             switch (ui.DrawRegister(form.username, form.password, session.Error())) {
             case UiAction::CreateAccount:
                 session.ClearError();
@@ -179,7 +179,7 @@ void Application::Run() {
         }
 
         if (scene == Scene::Login) {
-            world.Window().clear({12, 14, 20});
+            world.Window().clear();
             int accountSel = accounts.SelectedIndex();
             switch (ui.DrawLogin(form.username, form.password, accounts.Accounts(), accountSel, session.Error())) {
             case UiAction::SelectAccount:
@@ -205,7 +205,7 @@ void Application::Run() {
         }
 
         if (scene == Scene::RoomList) {
-            world.Window().clear({12, 14, 20});
+            world.Window().clear();
             const bool needsPassword = SelectedRoomNeedsPassword(session);
             int roomSel = session.SelectedRoom();
             switch (ui.DrawRoomList(session.Rooms(), roomSel, session.Points(), form.joinPassword, needsPassword)) {
@@ -232,7 +232,7 @@ void Application::Run() {
         }
 
         if (scene == Scene::Lobby) {
-            world.Window().clear({12, 14, 20});
+            world.Window().clear();
             bool allReady = session.AllLobbyReady(*session.Lobby());
             UiAction action = ui.DrawLobby(*session.Lobby(), session.PlayerId(), session.IsHost(), allReady, session.Error());
             if (action == UiAction::LeaveLobby)
@@ -249,7 +249,7 @@ void Application::Run() {
         }
 
         if (scene == Scene::Loading) {
-            world.Window().clear({12, 14, 20});
+            world.Window().clear();
             if (session.MapReady())
                 world.SetMap(session.MapTiles(), session.MapWidth(), session.MapHeight());
             ui.DrawLoading(session.LoadingProgress());
