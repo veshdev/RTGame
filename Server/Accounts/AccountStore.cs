@@ -1,74 +1,106 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using Npgsql;
 
 namespace Server.Accounts;
 
 public sealed class AccountStore
 {
-    private readonly string _path;
-    private readonly Dictionary<string, Account> _accounts = new(StringComparer.OrdinalIgnoreCase);
     private readonly object _lock = new();
 
-    public AccountStore(string path = "accounts.txt")
+    public AccountStore()
     {
-        _path = path;
-        Load();
+        Database.Initialize();
     }
 
     public bool TryLogin(string username, string password, out Account? account, out string? error)
     {
-        lock (_lock)
+        account = null;
+        error = null;
+        try
         {
-            if (!_accounts.TryGetValue(username, out Account? found))
+            using var conn = Database.CreateConnection();
+            conn.Open();
+            using var cmd = new NpgsqlCommand("SELECT password_hash, points FROM accounts WHERE username = @u", conn);
+            cmd.Parameters.AddWithValue("u", username);
+            using var rdr = cmd.ExecuteReader();
+            if (!rdr.Read())
             {
-                account = null;
                 error = "invalid_credentials";
                 return false;
             }
 
-            if (found.Password != password)
+            string stored = rdr.GetString(0);
+            int points = rdr.GetInt32(1);
+            if (stored != password)
             {
-                account = null;
                 error = "invalid_credentials";
                 return false;
             }
 
-            account = found;
-            error = null;
+            account = new Account(username, stored, points);
             return true;
+        }
+        catch (PostgresException ex)
+        {
+            Logger.Error($"[DB] Login Postgres error: {ex.Message}");
+            error = "db_error";
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"[DB] Login error: {ex.Message}");
+            error = "db_error";
+            return false;
         }
     }
 
     public bool TryRegister(string username, string password, out Account? account, out string? error)
     {
-        lock (_lock)
+        account = null;
+        error = null;
+
+        if (!IsValidUsername(username))
         {
-            account = null;
-            if (!IsValidUsername(username))
-            {
-                error = "bad_username";
-                return false;
-            }
+            error = "bad_username";
+            return false;
+        }
 
-            if (!IsValidPassword(password))
-            {
-                error = "bad_password";
-                return false;
-            }
+        if (!IsValidPassword(password))
+        {
+            error = "bad_password";
+            return false;
+        }
 
-            if (_accounts.ContainsKey(username))
-            {
-                error = "username_taken";
-                return false;
-            }
+        try
+        {
+            using var conn = Database.CreateConnection();
+            conn.Open();
+            using var tran = conn.BeginTransaction();
+            using var cmd = new NpgsqlCommand("INSERT INTO accounts (username, password_hash, points) VALUES (@u, @p, 0)", conn, tran);
+            cmd.Parameters.AddWithValue("u", username);
+            cmd.Parameters.AddWithValue("p", password);
+            cmd.ExecuteNonQuery();
+            tran.Commit();
 
             account = new Account(username, password, 0);
-            _accounts[username] = account;
-            Save();
-            error = null;
             return true;
+        }
+        catch (PostgresException ex) when (ex.SqlState == "23505")
+        {
+            error = "username_taken";
+            return false;
+        }
+        catch (PostgresException ex)
+        {
+            Logger.Error($"[DB] Register Postgres error: {ex.Message}");
+            error = "db_error";
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"[DB] Register error: {ex.Message}");
+            error = "db_error";
+            return false;
         }
     }
 
@@ -76,27 +108,41 @@ public sealed class AccountStore
     {
         if (points <= 0) return;
 
-        lock (_lock)
+        try
         {
-            if (_accounts.TryGetValue(username, out Account? account))
+            using var conn = Database.CreateConnection();
+            conn.Open();
+            using var cmd = new NpgsqlCommand("UPDATE accounts SET points = points + @p WHERE username = @u RETURNING points", conn);
+            cmd.Parameters.AddWithValue("p", points);
+            cmd.Parameters.AddWithValue("u", username);
+            var res = cmd.ExecuteScalar();
+            if (res == null)
             {
-                account.Points += points;
-                Save();
+                Logger.Warn($"[DB] AddPoints: user not found: {username}");
             }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"[DB] AddPoints error: {ex.Message}");
         }
     }
 
     public int GetPoints(string username)
     {
-        lock (_lock)
+        try
         {
-            return _accounts.TryGetValue(username, out Account? account) ? account.Points : 0;
+            using var conn = Database.CreateConnection();
+            conn.Open();
+            using var cmd = new NpgsqlCommand("SELECT points FROM accounts WHERE username = @u", conn);
+            cmd.Parameters.AddWithValue("u", username);
+            var res = cmd.ExecuteScalar();
+            return res == null ? 0 : Convert.ToInt32(res);
         }
-    }
-
-    private bool TryGet(string username, out Account? account)
-    {
-        return _accounts.TryGetValue(username, out account);
+        catch (Exception ex)
+        {
+            Logger.Error($"[DB] GetPoints error: {ex.Message}");
+            return 0;
+        }
     }
 
     private static bool IsValidUsername(string username) =>
@@ -104,26 +150,4 @@ public sealed class AccountStore
 
     private static bool IsValidPassword(string password) =>
         !string.IsNullOrEmpty(password) && password.Length <= 64;
-
-    private void Load()
-    {
-        if (!File.Exists(_path)) return;
-
-        foreach (string line in File.ReadAllLines(_path))
-        {
-            if (string.IsNullOrWhiteSpace(line)) continue;
-            string[] parts = line.Split(';', 3);
-            if (parts.Length < 3) continue;
-            if (!int.TryParse(parts[2], out int points)) continue;
-            _accounts[parts[0]] = new Account(parts[0], parts[1], points);
-        }
-    }
-
-    private void Save()
-    {
-        IEnumerable<string> lines = _accounts.Values
-            .OrderBy(a => a.Username, StringComparer.OrdinalIgnoreCase)
-            .Select(a => $"{a.Username};{a.Password};{a.Points}");
-        File.WriteAllLines(_path, lines);
-    }
 }
