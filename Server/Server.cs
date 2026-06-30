@@ -137,6 +137,9 @@ public class Server
 
         while (true)
         {
+            if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
+                break;
+
             double now = stopwatch.Elapsed.TotalSeconds;
             if (now >= nextTick)
             {
