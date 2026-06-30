@@ -55,6 +55,9 @@ InputState InputHandler::Poll(InputMode mode, bool uiWantsKeyboard, bool uiWants
             case Key::V:
                 state.toggleVsync = true;
                 break;
+            case Key::F3:
+                state.toggleFps = true;
+                break;
             case Key::Q:
                 state.quit = true;
                 break;

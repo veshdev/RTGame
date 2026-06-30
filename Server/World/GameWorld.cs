@@ -97,7 +97,8 @@ internal class GameWorld
         player.Angle = input.Angle;
         player.HotbarSlot = Math.Min(input.HotbarSlot, (byte)(DataSizes.HotbarSlots - 1));
         player.Fire = input.Fire;
-        player.Pickup = input.Pickup;
+        if (input.Pickup && !player.Pickup)
+            player.Pickup = true;
         player.LastInputTick = input.TickId;
     }
 
@@ -178,6 +179,8 @@ internal class GameWorld
 
             if (player.Pickup)
                 TryPickup(player);
+
+            player.Pickup = false;
         }
     }
 

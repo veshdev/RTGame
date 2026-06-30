@@ -19,4 +19,8 @@ private:
     float predictedX_ = 0.f;
     float predictedY_ = 0.f;
     float predictedAngle_ = 0.f;
+    bool showFps_ = false;
+    int frameCount_ = 0;
+    float fpsTimer_ = 0.f;
+    int currentFps_ = 0;
 };

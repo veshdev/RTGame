@@ -20,7 +20,6 @@ WorldRenderer::WorldRenderer() {
 
 bool WorldRenderer::Init(sf::Vector2u size) {
     window_.create(sf::VideoMode(size), "Realtime Game", sf::Style::Default, sf::State::Windowed);
-    window_.setFramerateLimit(120);
     window_.setVerticalSyncEnabled(true);
     camera_.SetViewport(size);
     return true;

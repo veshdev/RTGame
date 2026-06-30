@@ -70,6 +70,18 @@ void Application::Run() {
         const float dt = std::chrono::duration<float>(now - last).count();
         last = now;
 
+        // Update FPS counter
+        frameCount_++;
+        fpsTimer_ += dt;
+        if (fpsTimer_ >= 1.f) {
+            currentFps_ = frameCount_;
+            frameCount_ = 0;
+            fpsTimer_ -= 1.f;
+            if (showFps_) {
+                world.Window().setTitle("RTGame - FPS: " + std::to_string(currentFps_));
+            }
+        }
+
         session.PollNetwork();
         session.Update(dt);
 
@@ -101,6 +113,15 @@ void Application::Run() {
         if (in.quit && scene == Scene::MainMenu) {
             world.Window().close();
             continue;
+        }
+
+        if (in.toggleFps) {
+            showFps_ = !showFps_;
+            if (showFps_) {
+                world.Window().setTitle("RTGame - FPS: " + std::to_string(currentFps_));
+            } else {
+                world.Window().setTitle("RTGame");
+            }
         }
 
         ui.BeginFrame(world.Window(), dt);

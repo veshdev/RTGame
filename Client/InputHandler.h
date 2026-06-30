@@ -20,6 +20,7 @@ struct InputState {
     bool toggleReady = false;
     bool openSettings = false;
     bool toggleVsync = false;
+    bool toggleFps = false;
     bool createRoom = false;
     bool joinRoom = false;
     bool up = false;
