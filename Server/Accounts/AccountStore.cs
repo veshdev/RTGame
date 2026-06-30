@@ -3,6 +3,7 @@ namespace Server.Accounts;
 public sealed class AccountStore
 {
     private readonly object _lock = new();
+    private readonly HashSet<string> _loggedInUsers = new();
 
     public AccountStore()
     {
@@ -13,6 +14,15 @@ public sealed class AccountStore
     {
         account = null;
         error = null;
+
+        lock (_lock)
+        {
+            if (_loggedInUsers.Contains(username))
+            {
+                error = "already_logged_in";
+                return false;
+            }
+        }
 
         var accountData = Database.FindAccount(username);
         if (accountData == null)
@@ -26,6 +36,11 @@ public sealed class AccountStore
         {
             error = "invalid_credentials";
             return false;
+        }
+
+        lock (_lock)
+        {
+            _loggedInUsers.Add(username);
         }
 
         account = new Account(username, storedHash, points);
@@ -76,6 +91,14 @@ public sealed class AccountStore
     public int GetPoints(string username)
     {
         return Database.GetPoints(username);
+    }
+
+    public void Logout(string username)
+    {
+        lock (_lock)
+        {
+            _loggedInUsers.Remove(username);
+        }
     }
 
     private static bool IsValidUsername(string username) =>

@@ -393,6 +393,11 @@ internal class TcpClientHandler
         Running = false;
         try { _client.Close(); } catch (ObjectDisposedException) { }
 
+        if (PlayerId >= 0)
+        {
+            _server.Accounts.Logout(Username);
+        }
+
         if (PlayerId < 0)
             return;
 
