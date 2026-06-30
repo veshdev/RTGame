@@ -114,15 +114,18 @@ void Application::Run() {
                 if (const auto* sel = accounts.SelectedAccount())
                     ApplySavedAccount(form.username, form.password, *sel);
                 session.ClearError();
-                session.Login(Protocol::DefaultServerHost, form.username, form.password);
                 break;
             case UiAction::GoLogin:
                 session.ClearError();
                 if (const auto* sel = accounts.SelectedAccount())
                     ApplySavedAccount(form.username, form.password, *sel);
+                else
+                    form.username.clear(), form.password.clear();
                 session.Scenes().GoTo(Scene::Login);
                 break;
             case UiAction::GoRegister:
+                session.ClearError();
+                form.username.clear(), form.password.clear();
                 session.Scenes().GoTo(Scene::Register);
                 break;
             case UiAction::GoSettings:
