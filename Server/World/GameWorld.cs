@@ -540,11 +540,11 @@ internal class GameWorld
         {
             Player attacker = Players[attackerId];
             attacker.Kills += 1;
-            ServerLogger.LogPlayerKill(RoomId, attacker.PlayerId, attacker.Username, player.PlayerId, player.Username, "player");
+            Logger.Event($"PLAYER_KILL: room_id={RoomId} killer_id={attacker.PlayerId} killer={attacker.Username} target_id={player.PlayerId} target={player.Username} target_type=player");
         }
         else
         {
-            ServerLogger.LogPlayerDeath(RoomId, player.PlayerId, player.Username, "environment");
+            Logger.Event($"PLAYER_DEATH: room_id={RoomId} player_id={player.PlayerId} player={player.Username} cause=environment");
         }
     }
 
@@ -560,7 +560,7 @@ internal class GameWorld
         {
             Players[killerPid].Kills += 1;
             string monsterType = monster.MonsterType == MonsterType.Zombie ? "zombie" : "marauder";
-            ServerLogger.LogPlayerKill(RoomId, killerPid, Players[killerPid].Username, monster.MonsterId, $"monster_{monster.MonsterId}", monsterType);
+            Logger.Event($"PLAYER_KILL: room_id={RoomId} killer_id={killerPid} killer={Players[killerPid].Username} target_id={monster.MonsterId} target=monster_{monster.MonsterId} target_type={monsterType}");
         }
 
         DropEnemyLoot(monster);

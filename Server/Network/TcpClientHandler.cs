@@ -214,7 +214,7 @@ internal class TcpClientHandler
 
         PlayerId = playerId;
         Username = username;
-        ServerLogger.LogPlayerLogin(playerId, username, _address);
+        Logger.Event($"LOGIN: player_id={playerId} username={username} address={_address}");
 
         byte[] ack = new byte[5];
         ack[0] = (byte)playerId;
@@ -248,7 +248,7 @@ internal class TcpClientHandler
             return; 
         }
 
-        ServerLogger.LogRoomCreate(room.RoomId, roomName, PlayerId, Username);
+        Logger.Event($"ROOM_CREATE: room_id={room.RoomId} name={roomName} host_id={PlayerId} host={Username}");
 
         Send(TcpMsg.S_ROOM_JOINED, new byte[] { (byte)room.RoomId, 1 });
         BroadcastLobbyState(room);
@@ -337,7 +337,7 @@ internal class TcpClientHandler
 
         byte[] mapData = MapData.SerializeMap(gameWorld.Tiles, gameWorld.MapWidth, gameWorld.MapHeight, gameWorld.MapHash);
         BroadcastToRoom(room, TcpMsg.S_MATCH_STARTED, mapData);
-        ServerLogger.LogMatchStart(room.RoomId, room.PlayerCount);
+        Logger.Event($"MATCH_START: room_id={room.RoomId} players={room.PlayerCount}");
     }
 
     private static byte[] BuildErrorPayload(string reason)
@@ -389,7 +389,7 @@ internal class TcpClientHandler
 
     private void OnDisconnect()
     {
-        ServerLogger.LogPlayerDisconnect(PlayerId, Username);
+        Logger.Event($"DISCONNECT: player_id={PlayerId} username={Username}");
         Running = false;
         try { _client.Close(); } catch (ObjectDisposedException) { }
 
