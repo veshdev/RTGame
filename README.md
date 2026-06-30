@@ -1,6 +1,6 @@
 # RTGame
 
-RTGame is a multiplayer real-time game project developed as a practice project for NPG Soft.
+RTGame is a multiplayer real-time game project developed as a practice project for NGP Soft.
 
 ## Architecture
 
