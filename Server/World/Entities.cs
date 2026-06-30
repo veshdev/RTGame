@@ -98,6 +98,8 @@ public class Player
     public float ShootCooldown { get; set; }
     public uint LastInputTick { get; set; }
     public float ExtractionTimer { get; set; }
+    // Время неуязвимости после подключения / респавна (сек)
+    public float InvulnerabilityTimer { get; set; }
 
     public float MoveX { get; set; }
     public float MoveY { get; set; }
@@ -115,6 +117,7 @@ public class Player
         Hotbar = new Hotbar();
         Hotbar.ResetDefaultLoadout();
         IsConnected = true;
+        InvulnerabilityTimer = 0.0f;
     }
 
     public void Respawn(float x, float y)
@@ -125,6 +128,8 @@ public class Player
         Alive = true;
         ShootCooldown = 0.0f;
         ExtractionTimer = 0.0f;
+        // 3 секунды неуязвимости при респавне/подключении
+        InvulnerabilityTimer = 3.0f;
         Hotbar.ResetDefaultLoadout();
     }
 

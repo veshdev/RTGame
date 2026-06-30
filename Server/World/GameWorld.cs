@@ -173,6 +173,12 @@ internal class GameWorld
             if (player.ShootCooldown > 0)
                 player.ShootCooldown -= dt;
 
+            if (player.InvulnerabilityTimer > 0)
+            {
+                player.InvulnerabilityTimer -= dt;
+                if (player.InvulnerabilityTimer < 0) player.InvulnerabilityTimer = 0;
+            }
+
             if (player.Fire && player.ShootCooldown <= 0)
                 UseHotbarSlot(player);
 
@@ -571,6 +577,10 @@ internal class GameWorld
     private void ApplyDamagePlayer(Player player, int damage, int attackerId)
     {
         if (!player.Alive) return;
+        // Игрок неуязвим после подключения/респавна
+        if (player.InvulnerabilityTimer > 0)
+            return;
+
         player.Hp -= damage;
         if (player.Hp > 0) return;
 
