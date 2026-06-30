@@ -117,7 +117,7 @@ internal class GameWorld
             ExtractionProgress = ToExtractionProgress(p.ExtractionTimer),
         }).ToList();
 
-        var monsters = Monsters.Values.Where(m => m.Alive).Select(m => new MonsterEntryData
+        var monsters = Monsters.Values.Where(m => m != null && m.Alive).Select(m => new MonsterEntryData
         {
             MonsterId = (byte)m.MonsterId,
             Type = m.MonsterType,
@@ -129,7 +129,7 @@ internal class GameWorld
             State = (byte)m.State,
         }).ToList();
 
-        var projectiles = Projectiles.Values.Where(p => p.Alive).Select(pr => new ProjectileEntryData
+        var projectiles = Projectiles.Values.Where(p => p != null && p.Alive).Select(pr => new ProjectileEntryData
         {
             ProjectileId = (byte)pr.ProjId,
             OwnerId = (byte)pr.OwnerId,
@@ -140,7 +140,7 @@ internal class GameWorld
             Speed = pr.Speed,
         }).ToList();
 
-        var loot = LootItems.Values.Where(l => l.Alive).Select(l => new LootEntryData
+        var loot = LootItems.Values.Where(l => l != null && l.Alive).Select(l => new LootEntryData
         {
             LootId = (byte)l.LootId,
             ItemType = l.ItemType,

@@ -8,13 +8,6 @@ using Server.World;
 
 namespace Server.Network;
 
-// =============================================================================
-// Killfeed City - UDP Handler
-// UDP handler: receive client input packets, send world snapshots.
-// Runs in a dedicated thread. Maps UDP (ip, port) to PlayerId.
-// C# port from server/net/udp_handler.py
-// =============================================================================
-
 internal class UdpHandler : IDisposable
 {
     private const int UdpBufSize = 2048;
@@ -24,7 +17,6 @@ internal class UdpHandler : IDisposable
     private Thread _listenerThread;
     private volatile bool _running;
 
-    // Map IPEndPoint -> playerId (thread-safe)
     private readonly Dictionary<IPEndPoint, int> _addrToPid;
     private readonly object _addrLock = new();
 
@@ -36,7 +28,7 @@ internal class UdpHandler : IDisposable
         _udpClient = new UdpClient();
         _udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
         _udpClient.Client.Bind(new IPEndPoint(IPAddress.Parse(host), NetworkConstants.UdpPort));
-        _udpClient.Client.ReceiveTimeout = 1000;  // 1 second timeout so thread can exit cleanly
+        _udpClient.Client.ReceiveTimeout = 1000;
 
         _running = true;
         _listenerThread = new Thread(Run) { IsBackground = true, Name = "UDP-Listener" };
@@ -55,16 +47,12 @@ internal class UdpHandler : IDisposable
                 byte[] data = _udpClient.Receive(ref remoteEp);
                 HandleDatagram(data, remoteEp);
             }
-            catch (SocketException)
+            catch (SocketException) when (_running)
             {
-                if (!_running)
-                    break;
-                // Timeout, continue loop
                 continue;
             }
             catch (ObjectDisposedException)
             {
-                // Socket was closed
                 break;
             }
         }
@@ -76,9 +64,6 @@ internal class UdpHandler : IDisposable
         _udpClient?.Close();
     }
 
-    // ------------------------------------------------------------------
-    // Receive (private)
-    // ------------------------------------------------------------------
     private void HandleDatagram(byte[] data, IPEndPoint addr)
     {
         if (data == null || data.Length == 0)
@@ -88,21 +73,13 @@ internal class UdpHandler : IDisposable
 
         if (msgType == UdpMsg.C_INPUT)
         {
-            // Layout: [type=0x01][1B pid][input_struct...]
-            // The pid prefix lets the server map addr->pid before the
-            // first packet is associated with a known player.
             if (data.Length < 2)
                 return;
 
             int pid = data[1];
-
-            // Reconstruct the input packet for unpacking: [type][payload]
             byte[] inputPayload = new byte[data.Length - 1];
             inputPayload[0] = UdpMsg.C_INPUT;
-            if (data.Length > 2)
-            {
-                Buffer.BlockCopy(data, 2, inputPayload, 1, data.Length - 2);
-            }
+            Buffer.BlockCopy(data, 2, inputPayload, 1, Math.Max(0, data.Length - 2));
 
             UdpInputData? inp = UdpPacketHelpers.UnpackUdpInput(inputPayload);
             if (inp == null)
@@ -117,7 +94,6 @@ internal class UdpHandler : IDisposable
                 }
             }
 
-            // Forward input to the appropriate room's world
             Room? room = GetRoomOfPlayer(pid);
             if (room?.World is GameWorld world)
             {
@@ -128,23 +104,20 @@ internal class UdpHandler : IDisposable
 
     private void RegisterPlayerAddr(int pid, IPEndPoint addr)
     {
-        // Store the UDP addr on the Player so snapshots can be sent back.
         Room? room = GetRoomOfPlayer(pid);
-        if (room != null)
-        {
-            // Try to get player from room.World (GameWorld)
-            if (room.World is GameWorld world)
-            {
-                if (world.Players.TryGetValue(pid, out Player? player) && player != null)
-                {
-                    player.UdpAddr = (addr.Address.ToString(), addr.Port);
-                }
-            }
+        if (room == null)
+            return;
 
-            if (room.Players.TryGetValue(pid, out Player? roomPlayer) && roomPlayer != null)
-            {
-                roomPlayer.UdpAddr = (addr.Address.ToString(), addr.Port);
-            }
+        var udpAddr = (addr.Address.ToString(), addr.Port);
+
+        if (room.World is GameWorld world && world.Players.TryGetValue(pid, out Player? worldPlayer) && worldPlayer != null)
+        {
+            worldPlayer.UdpAddr = udpAddr;
+        }
+
+        if (room.Players.TryGetValue(pid, out Player? roomPlayer) && roomPlayer != null)
+        {
+            roomPlayer.UdpAddr = udpAddr;
         }
     }
 
@@ -153,50 +126,31 @@ internal class UdpHandler : IDisposable
         return _serverState.RoomManager.FindRoomOfPlayer(pid);
     }
 
-    // ------------------------------------------------------------------
-    // Send snapshots to all players in all active worlds
-    // ------------------------------------------------------------------
     public void BroadcastSnapshots()
     {
-        // Called from the game loop thread each tick.
-        try
+        foreach (var room in _serverState.RoomManager.Rooms.Values)
         {
-            foreach (var room in _serverState.RoomManager.Rooms.Values)
+            if (room.World is not GameWorld world)
+                continue;
+
+            foreach (var (pid, player) in world.Players)
             {
-                if (room.World is not GameWorld world)
+                if (!player.UdpAddr.HasValue)
                     continue;
 
                 try
                 {
-                    foreach (var kvp in world.Players)
-                    {
-                        int pid = kvp.Key;
-                        Player player = kvp.Value;
-
-                        if (!player.UdpAddr.HasValue)
-                            continue;
-
-                        try
-                        {
-                            var (ip, port) = player.UdpAddr.Value;
-                            byte[] snapshot = world.BuildSnapshotFor(pid);
-                            _udpClient.Send(snapshot, snapshot.Length, ip, port);
-                        }
-                        catch (SocketException)
-                        {
-                            // Ignore send errors
-                        }
-                    }
+                    var (ip, port) = player.UdpAddr.Value;
+                    byte[] snapshot = world.BuildSnapshotFor(pid);
+                    _udpClient.Send(snapshot, snapshot.Length, ip, port);
+                }
+                catch (SocketException)
+                {
                 }
                 catch (InvalidOperationException)
                 {
-                    // Room was disposed or players collection modified, skip
                 }
             }
-        }
-        catch
-        {
-            // Ignore errors during broadcast
         }
     }
 
@@ -206,7 +160,7 @@ internal class UdpHandler : IDisposable
         _udpClient?.Dispose();
         if (_listenerThread != null && _listenerThread.IsAlive)
         {
-            _listenerThread.Join(new TimeSpan(0, 0, 2));  // 2 second timeout
+            _listenerThread.Join(TimeSpan.FromSeconds(2));
         }
     }
 }
