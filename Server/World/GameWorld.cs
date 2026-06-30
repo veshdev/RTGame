@@ -12,6 +12,7 @@ internal class GameWorld
     private const int SHOTGUN_PELLETS = 5;
     private const double SHOTGUN_SPREAD = 0.06;
     private const float MarauderShootRange = 260.0f;
+    private const double MonsterFovDegrees = 140.0;
 
     public int RoomId { get; }
     public uint MapHash { get; }
@@ -369,33 +370,37 @@ internal class GameWorld
         {
             if (!monster.Alive) continue;
 
-            var (nearestPid, nearestDist) = FindNearestPlayer(monster);
             float speed = MonsterProperties.Speed[monster.MonsterType];
             float atkRange = MonsterProperties.AttackRange[monster.MonsterType];
             float detectRange = MonsterProperties.DetectRange[monster.MonsterType];
+            double halfFovRad = MonsterFovDegrees / 2.0 * Math.PI / 180.0;
+            var (nearestPidAll, nearestDistAll) = FindNearestPlayer(monster);
+            var (visiblePid, visibleDist) = FindNearestVisiblePlayer(monster, detectRange, halfFovRad);
 
-            if (nearestPid == -1)
+            if (visiblePid == -1)
             {
-                MonsterWander(monster, dt, speed);
-                continue;
+                if (nearestPidAll == -1)
+                {
+                    MonsterWander(monster, dt, speed);
+                    continue;
+                }
+                else if (monster.State == MonsterState.Chase && nearestDistAll > detectRange * 1.5)
+                {
+                    monster.State = MonsterState.Wander;
+                    monster.TargetPlayerId = -1;
+                }
             }
-
-            if (nearestDist < detectRange)
+            else
             {
                 monster.State = MonsterState.Chase;
-                monster.TargetPlayerId = nearestPid;
-            }
-            else if (monster.State == MonsterState.Chase && nearestDist > detectRange * 1.5)
-            {
-                monster.State = MonsterState.Wander;
-                monster.TargetPlayerId = -1;
+                monster.TargetPlayerId = visiblePid;
             }
 
             if (monster.State == MonsterState.Wander)
             {
                 MonsterWander(monster, dt, speed);
             }
-            else if (monster.State == MonsterState.Chase && Players.TryGetValue(nearestPid, out var target) && target.Alive)
+            else if (monster.State == MonsterState.Chase && Players.TryGetValue(monster.TargetPlayerId, out var target) && target.Alive)
             {
                 double dx = target.X - monster.X;
                 double dy = target.Y - monster.Y;
@@ -464,6 +469,32 @@ internal class GameWorld
         return (nearestPid, nearestDist);
     }
 
+    private (int pid, double dist) FindNearestVisiblePlayer(Monster monster, float detectRange, double halfFovRad)
+    {
+        int nearestPid = -1;
+        double nearestDist = double.PositiveInfinity;
+        foreach (var kv in Players)
+        {
+            if (!kv.Value.Alive) continue;
+            double dx = kv.Value.X - monster.X;
+            double dy = kv.Value.Y - monster.Y;
+            double d = Math.Sqrt(dx * dx + dy * dy);
+            if (d > detectRange) continue;
+            double angToPlayer = Math.Atan2(dx, -dy);
+            double monsterAng = monster.Angle * 2.0 * Math.PI;
+            double diff = angToPlayer - monsterAng;
+            while (diff <= -Math.PI) diff += 2.0 * Math.PI;
+            while (diff > Math.PI) diff -= 2.0 * Math.PI;
+            if (Math.Abs(diff) > halfFovRad) continue;
+            if (d < nearestDist)
+            {
+                nearestDist = d;
+                nearestPid = kv.Key;
+            }
+        }
+        return (nearestPid, nearestDist);
+    }
+
     private void MonsterWander(Monster monster, float dt, float speed)
     {
         monster.WanderTimer -= dt;
@@ -473,6 +504,13 @@ internal class GameWorld
             float wanderSpeed = speed * 0.35f;
             monster.WanderDx = (float)(Math.Cos(angle) * wanderSpeed);
             monster.WanderDy = (float)(Math.Sin(angle) * wanderSpeed);
+            UpdateFacing(monster, monster.WanderDx, monster.WanderDy);
+            if (_rng.NextDouble() < 0.15)
+            {
+                monster.WanderDx = -monster.WanderDx;
+                monster.WanderDy = -monster.WanderDy;
+                monster.Angle = (monster.Angle + 0.5f) % 1.0f;
+            }
             monster.WanderTimer = (float)(_rng.NextDouble() * 2.0 + 1.0);
         }
 
@@ -598,6 +636,7 @@ internal class GameWorld
     {
         int mid = _nextMonsterId++;
         Monsters[mid] = new Monster(mid, type, x, y, weapon);
+        Monsters[mid].Angle = (float)_rng.NextDouble();
     }
 
     private void SpawnProjectile(int ownerId, ItemType wtype, float x, float y, float angle, bool fromMonster = false)
