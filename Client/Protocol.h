@@ -165,7 +165,6 @@ bool IsSha256Hex(const std::string& s);
 
 std::vector<uint8_t> PackUdpInput(uint32_t tickId, float moveX, float moveY, float angle,
                                   uint8_t hotbarSlot, bool fire, bool pickup);
-bool UnpackUdpInput(const uint8_t* data, size_t dataLen, UdpInput& out);
 
 } // namespace Protocol
 

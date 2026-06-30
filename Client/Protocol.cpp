@@ -128,27 +128,6 @@ std::vector<uint8_t> PackUdpInput(uint32_t tickId, float moveX, float moveY, flo
     return out;
 }
 
-bool UnpackUdpInput(const uint8_t* data, size_t dataLen, UdpInput& out) {
-    if (!data || dataLen < 1 + UdpInputPayloadSize || data[0] != UdpMsg::C_INPUT) return false;
-
-    const uint8_t* p = data + 1;
-    out.tickId = static_cast<uint32_t>(p[0]) | (static_cast<uint32_t>(p[1]) << 8) |
-                 (static_cast<uint32_t>(p[2]) << 16) | (static_cast<uint32_t>(p[3]) << 24);
-
-    const int16_t mx = static_cast<int16_t>(static_cast<uint16_t>(p[4]) | (static_cast<uint16_t>(p[5]) << 8));
-    const int16_t my = static_cast<int16_t>(static_cast<uint16_t>(p[6]) | (static_cast<uint16_t>(p[7]) << 8));
-    const uint16_t ai = static_cast<uint16_t>(static_cast<uint16_t>(p[8]) | (static_cast<uint16_t>(p[9]) << 8));
-
-    out.moveX = static_cast<float>(mx) / 32767.f;
-    out.moveY = static_cast<float>(my) / 32767.f;
-    out.angle = static_cast<float>(ai) / 65535.f;
-    out.hotbarSlot = p[10];
-    out.fire = (p[11] & 1) != 0;
-    out.pickup = (p[11] & 2) != 0;
-
-    return true;
-}
-
 std::string Sha256Hex(const std::string& input) {
     SHA256 sha256;
     return sha256(input);
