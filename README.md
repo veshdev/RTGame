@@ -68,8 +68,9 @@ vcpkg install
 
 1. Set up PostgreSQL database
 2. Configure server connection settings
-3. Start the server: `cd Server && dotnet run`
-4. Start the client and connect to the server
+3. Copy assets from Client/assets to client exe directory
+4. Start the server: `cd Server && dotnet run`
+5. Start the client and connect to the server
 
 ## License
 
