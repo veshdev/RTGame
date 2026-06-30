@@ -34,5 +34,5 @@ private:
     void RecvLoop();
 
     class Impl;
-    Impl* impl_;
+    std::unique_ptr<Impl> impl_;
 };

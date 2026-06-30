@@ -16,11 +16,10 @@ public:
     EventCallback callback;
 };
 
-TcpClient::TcpClient() : impl_(new Impl()) {}
+TcpClient::TcpClient() : impl_(std::make_unique<Impl>()) {}
 
 TcpClient::~TcpClient() {
     Disconnect();
-    delete impl_;
 }
 
 bool TcpClient::Connect(const std::string& host, uint16_t port) {
