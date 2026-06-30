@@ -13,11 +13,6 @@ public static class EntityConstants
     public const int MedkitHeal = 40;
 }
 
-public interface ISnapshotable
-{
-    Dictionary<string, object> ToSnapshotDict();
-}
-
 public sealed class Hotbar
 {
     private readonly byte[] _quantities = new byte[DataSizes.HotbarSlots];
@@ -82,7 +77,7 @@ public sealed class Hotbar
     }
 }
 
-public class Player : ISnapshotable
+public class Player
 {
     public int PlayerId { get; set; }
     public string Username { get; set; }
@@ -134,23 +129,6 @@ public class Player : ISnapshotable
     }
 
     public int CarriedLoot => Hotbar.GetQuantity((int)Network.HotbarSlot.Loot);
-
-    public Dictionary<string, object> ToSnapshotDict()
-    {
-        return new Dictionary<string, object>
-        {
-            { "id", PlayerId },
-            { "hp", Hp },
-            { "x", X },
-            { "y", Y },
-            { "angle", Angle },
-            { "hotbar_slot", HotbarSlot },
-            { "alive", Alive },
-            { "kills", Kills },
-            { "loot", CarriedLoot },
-            { "extraction", ExtractionTimer },
-        };
-    }
 }
 
 public static class MonsterState
@@ -161,7 +139,7 @@ public static class MonsterState
     public const int Dead = 3;
 }
 
-public class Monster : ISnapshotable
+public class Monster
 {
     public int MonsterId { get; set; }
     public MonsterType MonsterType { get; set; }
@@ -191,24 +169,9 @@ public class Monster : ISnapshotable
         State = MonsterState.Wander;
         TargetPlayerId = -1;
     }
-
-    public Dictionary<string, object> ToSnapshotDict()
-    {
-        return new Dictionary<string, object>
-        {
-            { "id", MonsterId },
-            { "type", (byte)MonsterType },
-            { "weapon", (byte)WeaponType },
-            { "hp", Hp },
-            { "x", X },
-            { "y", Y },
-            { "angle", Angle },
-            { "state", State },
-        };
-    }
 }
 
-public class Projectile : ISnapshotable
+public class Projectile
 {
     public int ProjId { get; set; }
     public int OwnerId { get; set; }
@@ -237,23 +200,9 @@ public class Projectile : ISnapshotable
         MaxRange = ItemProperties.WeaponRange.GetValueOrDefault(weaponType, 400);
         Alive = true;
     }
-
-    public Dictionary<string, object> ToSnapshotDict()
-    {
-        return new Dictionary<string, object>
-        {
-            { "id", ProjId },
-            { "owner_id", OwnerId },
-            { "weapon_type", (byte)WeaponType },
-            { "x", X },
-            { "y", Y },
-            { "angle", Angle },
-            { "speed", Speed },
-        };
-    }
 }
 
-public class LootItem : ISnapshotable
+public class LootItem
 {
     public int LootId { get; set; }
     public ItemType ItemType { get; set; }
@@ -270,18 +219,6 @@ public class LootItem : ISnapshotable
         X = x;
         Y = y;
         Alive = true;
-    }
-
-    public Dictionary<string, object> ToSnapshotDict()
-    {
-        return new Dictionary<string, object>
-        {
-            { "id", LootId },
-            { "item_type", (byte)ItemType },
-            { "quantity", Quantity },
-            { "x", X },
-            { "y", Y },
-        };
     }
 }
 
