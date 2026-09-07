@@ -58,10 +58,12 @@ jobs:
 
       - name: Build Client
         run: |
-          # Явно указываем пути через свойства проекта
-          msbuild Client\Client.vcxproj /p:Configuration=Release /p:Platform=x64 /p:VcpkgRoot="$env:VCPKG_ROOT" /p:IncludePath="$env:VCPKG_ROOT\installed\x64-windows\include;$(IncludePath)" /p:LibraryPath="$env:VCPKG_ROOT\installed\x64-windows\lib;$(LibraryPath)" /p:ExecutablePath="$env:VCPKG_ROOT\installed\x64-windows\bin;$(ExecutablePath)"
+          msbuild Client\Client.vcxproj /p:Configuration=Release /p:Platform=x64
         env:
           VCPKG_ROOT: ${{ env.VCPKG_ROOT }}
+          # Эти переменные гарантированно увидят компилятор и линковщик
+          INCLUDE: ${{ env.VCPKG_ROOT }}\installed\x64-windows\include
+          LIB: ${{ env.VCPKG_ROOT }}\installed\x64-windows\lib
 
       - name: Prepare Client Artifact
         run: |
