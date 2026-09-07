@@ -56,16 +56,16 @@ jobs:
       - name: Build Client
         run: |
           cd Client
-          msbuild RTGameClient.sln /p:Configuration=Release /p:Platform=x64 /p:VcpkgRoot="$env:VCPKG_ROOT"
+          msbuild RTGame.slnx /p:Configuration=Release /p:Platform=x64 /p:VcpkgRoot="$env:VCPKG_ROOT"
 
       - name: Prepare Client Artifact
         run: |
           mkdir publish\client
-          # Копируем EXE и DLL
-          copy Client\x64\Release\*.exe publish\client\
-          copy Client\x64\Release\*.dll publish\client\
-          # Копируем ассеты (обязательно для работы клиента)
-          xcopy /E /I Client\assets publish\client\assets
+          # Копируем все exe и dll из папки Client
+          for /r Client %f in (*.exe) do copy "%f" publish\client\
+          for /r Client %f in (*.dll) do copy "%f" publish\client\
+          # Копируем ассеты, если есть
+          if exist Client\assets xcopy /E /I Client\assets publish\client\assets
 
       - name: Upload Client Artifact
         uses: actions/upload-artifact@v4
