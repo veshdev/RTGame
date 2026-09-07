@@ -1,8 +1,11 @@
 {
+  "name": "rtgame-client",
+  "version": "1.0.0",
   "dependencies": [
+    "sfml",
     "imgui",
     "imgui-sfml",
-    "sfml",
     "hash-library"
-  ]
+  ],
+  "builtin-baseline": "ffed70e09662f9b535761716ea9b9623a461b9df"
 }
