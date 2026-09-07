@@ -1,0 +1,106 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-server:
+    name: Build Server
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore and Build Server
+        run: |
+          cd Server
+          dotnet restore
+          dotnet publish -c Release -r win-x64 --self-contained true -o ../publish/server
+
+      - name: Upload Server Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RTGame-Server
+          path: publish/server
+
+  build-client:
+    name: Build Client
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup vcpkg
+        run: |
+          git clone https://github.com/Microsoft/vcpkg.git
+          cd vcpkg
+          .\bootstrap-vcpkg.bat
+          echo "VCPKG_ROOT=$env:GITHUB_WORKSPACE\vcpkg" >> $env:GITHUB_ENV
+          echo "$env:GITHUB_WORKSPACE\vcpkg" >> $env:GITHUB_PATH
+
+      - name: Install Dependencies
+        run: |
+          cd Client
+          ..\vcpkg\vcpkg install --triplet x64-windows
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build Client
+        run: |
+          cd Client
+          msbuild RTGameClient.sln /p:Configuration=Release /p:Platform=x64 /p:VcpkgRoot="$env:VCPKG_ROOT"
+
+      - name: Prepare Client Artifact
+        run: |
+          mkdir publish\client
+          # Копируем EXE и DLL
+          copy Client\x64\Release\*.exe publish\client\
+          copy Client\x64\Release\*.dll publish\client\
+          # Копируем ассеты (обязательно для работы клиента)
+          xcopy /E /I Client\assets publish\client\assets
+
+      - name: Upload Client Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RTGame-Client
+          path: publish/client
+
+  create-release:
+    name: Create Release
+    needs: [build-server, build-client]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Archive Server
+        run: |
+          cd artifacts/RTGame-Server
+          zip -r ../../RTGame-Server-Windows.zip .
+
+      - name: Archive Client
+        run: |
+          cd artifacts/RTGame-Client
+          zip -r ../../RTGame-Client-Windows.zip .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            RTGame-Server-Windows.zip
+            RTGame-Client-Windows.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
