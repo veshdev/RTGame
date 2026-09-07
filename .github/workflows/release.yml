@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch: # Позволяет запускать вручную с телефона
 
 jobs:
   build-server:
@@ -55,17 +56,16 @@ jobs:
 
       - name: Build Client
         run: |
-          cd Client
-          msbuild RTGame.slnx /p:Configuration=Release /p:Platform=x64 /p:VcpkgRoot="$env:VCPKG_ROOT"
+          msbuild Client\Client.vcxproj /p:Configuration=Release /p:Platform=x64 /p:VcpkgRoot="$env:VCPKG_ROOT"
 
       - name: Prepare Client Artifact
         run: |
           mkdir publish\client
-          # Копируем все exe и dll из папки Client
+          # Копируем собранные файлы (поиск по всем подпапкам Client)
           for /r Client %f in (*.exe) do copy "%f" publish\client\
           for /r Client %f in (*.dll) do copy "%f" publish\client\
-          # Копируем ассеты, если есть
-          if exist Client\assets xcopy /E /I Client\assets publish\client\assets
+          # Копируем папку с ассетами (именно assets, а не asset)
+          if exist Client\assets xcopy /E /I Client\assets publish\client\assets\
 
       - name: Upload Client Artifact
         uses: actions/upload-artifact@v4
