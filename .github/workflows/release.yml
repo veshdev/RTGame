@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch: # Позволяет запускать вручную с телефона
+  workflow_dispatch:
 
 jobs:
   build-server:
@@ -40,32 +40,48 @@ jobs:
 
       - name: Setup vcpkg
         run: |
+          # Клонируем vcpkg
           git clone https://github.com/Microsoft/vcpkg.git
           cd vcpkg
           .\bootstrap-vcpkg.bat
           echo "VCPKG_ROOT=$env:GITHUB_WORKSPACE\vcpkg" >> $env:GITHUB_ENV
           echo "$env:GITHUB_WORKSPACE\vcpkg" >> $env:GITHUB_PATH
+          # Интегрируем vcpkg с MSBuild (глобально)
+          .\vcpkg integrate install
 
-      - name: Install Dependencies
+      - name: Install Dependencies from Manifest
         run: |
           cd Client
           ..\vcpkg\vcpkg install --triplet x64-windows
+        env:
+          VCPKG_ROOT: ${{ env.VCPKG_ROOT }}
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build Client
+      - name: Build Client with Manifest
         run: |
-          msbuild Client\Client.vcxproj /p:Configuration=Release /p:Platform=x64 /p:VcpkgRoot="$env:VCPKG_ROOT"
+          # Собираем с использованием манифеста
+          msbuild Client\Client.vcxproj /p:Configuration=Release /p:Platform=x64 /p:VcpkgRoot="$env:VCPKG_ROOT" /p:VcpkgEnabled=true /p:VcpkgManifestEnabled=true /p:VcpkgTriplet=x64-windows /p:UseVcpkg=true
+        env:
+          VCPKG_ROOT: ${{ env.VCPKG_ROOT }}
 
       - name: Prepare Client Artifact
         run: |
           mkdir publish\client
-          # Копируем собранные файлы (поиск по всем подпапкам Client)
-          for /r Client %f in (*.exe) do copy "%f" publish\client\
-          for /r Client %f in (*.dll) do copy "%f" publish\client\
-          # Копируем папку с ассетами (именно assets, а не asset)
+          # Копируем собранный EXE (может быть в разных местах)
+          if exist "Client\x64\Release\*.exe" copy "Client\x64\Release\*.exe" publish\client\
+          if exist "Client\Release\*.exe" copy "Client\Release\*.exe" publish\client\
+          if exist "Client\*.exe" copy "Client\*.exe" publish\client\
+          # Копируем DLL
+          if exist "Client\x64\Release\*.dll" copy "Client\x64\Release\*.dll" publish\client\
+          if exist "Client\Release\*.dll" copy "Client\Release\*.dll" publish\client\
+          # Копируем DLL от vcpkg (если нужны)
+          if exist "$env:VCPKG_ROOT\installed\x64-windows\bin" xcopy /E /I "$env:VCPKG_ROOT\installed\x64-windows\bin\*.dll" publish\client\
+          # Копируем ассеты
           if exist Client\assets xcopy /E /I Client\assets publish\client\assets\
+        env:
+          VCPKG_ROOT: ${{ env.VCPKG_ROOT }}
 
       - name: Upload Client Artifact
         uses: actions/upload-artifact@v4
