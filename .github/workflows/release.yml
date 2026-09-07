@@ -56,10 +56,10 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build Client (Manual vcpkg)
+      - name: Build Client
         run: |
-          # Собираем, явно указывая пути к include и lib
-          msbuild Client\Client.vcxproj /p:Configuration=Release /p:Platform=x64 /p:VcpkgRoot="$env:VCPKG_ROOT" /p:VcpkgEnabled=false /p:AdditionalIncludeDirectories="$env:VCPKG_ROOT\installed\x64-windows\include" /p:AdditionalLibraryDirectories="$env:VCPKG_ROOT\installed\x64-windows\lib" /p:IgnoreImportLibrary=true
+          # Явно указываем пути через свойства проекта
+          msbuild Client\Client.vcxproj /p:Configuration=Release /p:Platform=x64 /p:VcpkgRoot="$env:VCPKG_ROOT" /p:IncludePath="$env:VCPKG_ROOT\installed\x64-windows\include;$(IncludePath)" /p:LibraryPath="$env:VCPKG_ROOT\installed\x64-windows\lib;$(LibraryPath)" /p:ExecutablePath="$env:VCPKG_ROOT\installed\x64-windows\bin;$(ExecutablePath)"
         env:
           VCPKG_ROOT: ${{ env.VCPKG_ROOT }}
 
@@ -73,7 +73,7 @@ jobs:
           # Копируем DLL
           if exist "Client\x64\Release\*.dll" copy "Client\x64\Release\*.dll" publish\client\
           if exist "Client\Release\*.dll" copy "Client\Release\*.dll" publish\client\
-          # Копируем DLL от vcpkg (если нужны)
+          # Копируем DLL от vcpkg
           if exist "$env:VCPKG_ROOT\installed\x64-windows\bin" xcopy /E /I "$env:VCPKG_ROOT\installed\x64-windows\bin\*.dll" publish\client\
           # Копируем ассеты
           if exist Client\assets xcopy /E /I Client\assets publish\client\assets\
