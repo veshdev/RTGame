@@ -5,7 +5,7 @@ namespace Server;
 
 internal static class Database
 {
-    private static readonly string _connectionString = "Host=localhost;Port=5432;Database=rtgame;Username=postgres;Password=zxc;Pooling=true";
+    private static readonly string _connectionString = "Host=localhost;Port=5432;Database=rtgame;Username=postgres;Password=rootroot;Pooling=true";
 
     public static void Initialize()
     {
